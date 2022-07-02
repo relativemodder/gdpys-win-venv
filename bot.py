@@ -171,5 +171,32 @@ async def promote(message: types.Message):
     db.connection.commit()
     await message.reply(f"Модлвел обновлён у игрока {to_user['username']}")
 
+@dp.message_handler(content_types=["audio"])
+async def upload_song(message: types.Message):
+    logging.info(message.audio.as_json())
+    user = utils.get_user_assoc_TG(message.from_user.id)
+    if user is None:
+        await message.reply("""Ошибка!
+Аккаунт не привязан. Привяжите командой /link.""")
+        return
+    audio = message.audio
+    db = Database(assoc=True)
+    file_name = audio.file_name.split(".")[0].replace("~", ".")
+    file_url = ""
+    db.cursor.execute("INSERT INTO songs VALUES (NULL, %s, %s, 0, %s, %s)", (file_name, file_url, audio.file_size, user['username']))
+    db.connection.commit()
+
+    song_id = db.cursor.lastrowid
+
+    await audio.download(destination_file = f"music/{song_id}.mp3")
+
+    file_url = f"http://rltgdps.tk/music/{song_id}.mp3"
+
+    db.cursor.execute("UPDATE songs SET url = %s WHERE ID = %s", (file_url, song_id))
+    db.connection.commit()
+    
+    await message.reply(f"""Успешно!
+ID песни: {song_id}""")
+
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)

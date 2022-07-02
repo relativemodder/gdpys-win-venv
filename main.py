@@ -5,6 +5,7 @@ import os
 from typing import Mapping, Optional
 from fastapi import BackgroundTasks, Depends, FastAPI, Form, Request
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import models
 import accounts
 import comments
@@ -22,6 +23,8 @@ async def generic_error_handler(request: Request, exc: models.GenericError):
     return HTMLResponse(str(exc.code))
 
 entry:str = '/database/gmdapi'
+
+app.mount("/music", StaticFiles(directory="music"), name="music")
 
 async def gjp_check(accountID: int = Form(), gjp: str = Form()):
     utils.add_activity()
